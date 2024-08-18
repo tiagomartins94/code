@@ -1,0 +1,31 @@
+DECLARE @sql NVARCHAR(MAX) = '';
+DECLARE @table_name NVARCHAR(255);
+
+DECLARE @Condition NVARCHAR(2000);
+SET @Condition = '';
+
+-- Cursor to loop through each table that matches the pattern
+DECLARE table_cursor CURSOR FOR
+SELECT table_name
+FROM INFORMATION_SCHEMA.TABLES
+WHERE table_name LIKE '%DimCustomer%';
+
+OPEN table_cursor;
+FETCH NEXT FROM table_cursor INTO @table_name;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Add the select statement for each table to the SQL string
+    SET @sql = @sql + 'SELECT * FROM '+@table_name+' UNION ALL ';
+
+    FETCH NEXT FROM table_cursor INTO @table_name;
+END;
+
+CLOSE table_cursor;
+DEALLOCATE table_cursor;
+
+-- Remove the last 'UNION ALL ' from the SQL string
+SET @sql = LEFT(@sql, LEN(@sql) - 10);
+
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
