@@ -1,9 +1,6 @@
 DECLARE @sql NVARCHAR(MAX) = '';
 DECLARE @table_name NVARCHAR(255);
 
-DECLARE @Condition NVARCHAR(2000);
-SET @Condition = '';
-
 -- Cursor to loop through each table that matches the pattern
 DECLARE table_cursor CURSOR FOR
 SELECT table_name
@@ -15,8 +12,8 @@ FETCH NEXT FROM table_cursor INTO @table_name;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
-    -- Add the select statement for each table to the SQL string
-    SET @sql = @sql + 'SELECT * FROM '+@table_name+' UNION ALL ';
+    -- Add the select statement for each table to the SQL string, using QUOTENAME to properly quote table names
+    SET @sql = @sql + 'SELECT * FROM ' + QUOTENAME(@table_name) + ' UNION ALL ';
 
     FETCH NEXT FROM table_cursor INTO @table_name;
 END;
@@ -24,8 +21,14 @@ END;
 CLOSE table_cursor;
 DEALLOCATE table_cursor;
 
--- Remove the last 'UNION ALL ' from the SQL string
-SET @sql = LEFT(@sql, LEN(@sql) - 10);
+-- Remove the last 'UNION ALL ' from the SQL string if it exists
+IF LEN(@sql) > 0
+BEGIN
+    SET @sql = LEFT(@sql, LEN(@sql) - 10);
+END
+
+-- Print the generated SQL for debugging purposes
+PRINT @sql;
 
 -- Execute the dynamic SQL
 EXEC sp_executesql @sql;
