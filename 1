@@ -12,8 +12,9 @@ FETCH NEXT FROM table_cursor INTO @table_name;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
-    -- Add the select statement for each table to the SQL string, including the schema
-    SET @sql = @sql + 'SELECT * FROM dbo.' + QUOTENAME(@table_name) + ' UNION ALL ';
+    -- Modify the select statement to safely handle conversions
+    -- Assume you have a column named 'CustomerID' that might need conversion
+    SET @sql = @sql + 'SELECT * FROM dbo.' + QUOTENAME(@table_name) + ' WHERE TRY_CONVERT(BIGINT, CustomerID) IS NOT NULL UNION ALL ';
 
     FETCH NEXT FROM table_cursor INTO @table_name;
 END;
